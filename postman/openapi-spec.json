@@ -1,0 +1,911 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/api/v1/books": {
+      "post": {
+        "operationId": "BooksController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBookDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Buku berhasil ditambahkan"
+          },
+          "400": {
+            "description": "Payload tidak valid"
+          }
+        },
+        "summary": "Menambahkan buku baru ke katalog perpustakaan",
+        "tags": [
+          "Books"
+        ]
+      },
+      "get": {
+        "operationId": "BooksController_findAll",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Nomor halaman",
+            "schema": {
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Jumlah item per halaman",
+            "schema": {
+              "default": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Kata kunci pencarian",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "description": "Kolom untuk pengurutan data",
+            "schema": {
+              "default": "createdAt",
+              "type": "string"
+            }
+          },
+          {
+            "name": "order",
+            "required": false,
+            "in": "query",
+            "description": "Arah pengurutan data (ASC atau DESC)",
+            "schema": {
+              "default": "DESC",
+              "type": "string",
+              "enum": [
+                "ASC",
+                "DESC"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Daftar buku berhasil diambil"
+          },
+          "400": {
+            "description": "Parameter kueri sortBy atau order tidak valid"
+          }
+        },
+        "summary": "Mendapatkan daftar buku (dengan pagination, search, dan sorting)",
+        "tags": [
+          "Books"
+        ]
+      }
+    },
+    "/api/v1/books/{id}": {
+      "get": {
+        "operationId": "BooksController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID Buku (UUID)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detail buku berhasil diambil"
+          },
+          "404": {
+            "description": "Buku tidak ditemukan"
+          }
+        },
+        "summary": "Mendapatkan detail buku berdasarkan ID (UUID)",
+        "tags": [
+          "Books"
+        ]
+      },
+      "put": {
+        "operationId": "BooksController_updateFull",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID Buku (UUID)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "if-match",
+            "required": false,
+            "in": "header",
+            "description": "Strong ETag validator untuk optimistic concurrency control",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateBookDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Data buku berhasil diperbarui"
+          },
+          "400": {
+            "description": "Payload tidak valid atau konflik stok"
+          },
+          "404": {
+            "description": "Buku tidak ditemukan"
+          },
+          "412": {
+            "description": "Precondition Failed - ETag usang atau tidak cocok"
+          }
+        },
+        "summary": "Memperbarui seluruh data buku (dengan dukungan If-Match)",
+        "tags": [
+          "Books"
+        ]
+      },
+      "patch": {
+        "operationId": "BooksController_updatePartial",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID Buku (UUID)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "if-match",
+            "required": false,
+            "in": "header",
+            "description": "Strong ETag validator untuk optimistic concurrency control",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateBookDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Data buku berhasil diperbarui"
+          },
+          "404": {
+            "description": "Buku tidak ditemukan"
+          },
+          "412": {
+            "description": "Precondition Failed - ETag usang atau tidak cocok"
+          }
+        },
+        "summary": "Memperbarui sebagian data buku (dengan dukungan If-Match)",
+        "tags": [
+          "Books"
+        ]
+      },
+      "delete": {
+        "operationId": "BooksController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID Buku (UUID)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Buku berhasil dihapus"
+          },
+          "400": {
+            "description": "Buku tidak bisa dihapus karena masih ada peminjaman aktif"
+          },
+          "404": {
+            "description": "Buku tidak ditemukan"
+          }
+        },
+        "summary": "Menghapus buku dari katalog",
+        "tags": [
+          "Books"
+        ]
+      }
+    },
+    "/api/v1/members": {
+      "post": {
+        "operationId": "MembersController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMemberDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Anggota berhasil didaftarkan"
+          },
+          "400": {
+            "description": "Payload tidak valid"
+          },
+          "409": {
+            "description": "NIM sudah terdaftar"
+          }
+        },
+        "summary": "Mendaftarkan anggota baru",
+        "tags": [
+          "Members"
+        ]
+      },
+      "get": {
+        "operationId": "MembersController_findAll",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Nomor halaman",
+            "schema": {
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Jumlah item per halaman",
+            "schema": {
+              "default": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Kata kunci pencarian",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "description": "Kolom untuk pengurutan data",
+            "schema": {
+              "default": "createdAt",
+              "type": "string"
+            }
+          },
+          {
+            "name": "order",
+            "required": false,
+            "in": "query",
+            "description": "Arah pengurutan data (ASC atau DESC)",
+            "schema": {
+              "default": "DESC",
+              "type": "string",
+              "enum": [
+                "ASC",
+                "DESC"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Daftar anggota berhasil diambil"
+          },
+          "400": {
+            "description": "Parameter kueri sortBy atau order tidak valid"
+          }
+        },
+        "summary": "Mendapatkan daftar anggota (dengan pagination, search, dan sorting)",
+        "tags": [
+          "Members"
+        ]
+      }
+    },
+    "/api/v1/members/{id}": {
+      "get": {
+        "operationId": "MembersController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID Anggota (UUID)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detail anggota berhasil diambil"
+          },
+          "404": {
+            "description": "Anggota tidak ditemukan"
+          }
+        },
+        "summary": "Mendapatkan detail anggota beserta riwayat peminjaman",
+        "tags": [
+          "Members"
+        ]
+      },
+      "put": {
+        "operationId": "MembersController_updateFull",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID Anggota (UUID)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "if-match",
+            "required": false,
+            "in": "header",
+            "description": "Strong ETag validator untuk optimistic concurrency control",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMemberDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Data anggota berhasil diperbarui"
+          },
+          "404": {
+            "description": "Anggota tidak ditemukan"
+          },
+          "409": {
+            "description": "NIM sudah digunakan anggota lain"
+          },
+          "412": {
+            "description": "Precondition Failed - ETag usang atau tidak cocok"
+          }
+        },
+        "summary": "Memperbarui seluruh data anggota (dengan dukungan If-Match)",
+        "tags": [
+          "Members"
+        ]
+      },
+      "patch": {
+        "operationId": "MembersController_updatePartial",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID Anggota (UUID)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "if-match",
+            "required": false,
+            "in": "header",
+            "description": "Strong ETag validator untuk optimistic concurrency control",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMemberDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Data anggota berhasil diperbarui"
+          },
+          "404": {
+            "description": "Anggota tidak ditemukan"
+          },
+          "409": {
+            "description": "NIM sudah digunakan anggota lain"
+          },
+          "412": {
+            "description": "Precondition Failed - ETag usang atau tidak cocok"
+          }
+        },
+        "summary": "Memperbarui sebagian data anggota (dengan dukungan If-Match)",
+        "tags": [
+          "Members"
+        ]
+      },
+      "delete": {
+        "operationId": "MembersController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID Anggota (UUID)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Anggota berhasil dihapus"
+          },
+          "400": {
+            "description": "Anggota tidak dapat dihapus karena masih meminjam buku"
+          },
+          "404": {
+            "description": "Anggota tidak ditemukan"
+          }
+        },
+        "summary": "Menghapus anggota",
+        "tags": [
+          "Members"
+        ]
+      }
+    },
+    "/api/v1/loans": {
+      "post": {
+        "operationId": "LoansController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateLoanDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Peminjaman berhasil dicatat, stok buku otomatis berkurang"
+          },
+          "400": {
+            "description": "Stok buku habis atau tanggal pengembalian tidak valid"
+          },
+          "404": {
+            "description": "Buku atau anggota tidak ditemukan"
+          }
+        },
+        "summary": "Mencatat peminjaman buku baru (Atomic Transaction: validasi stok & kurangi eksemplar)",
+        "tags": [
+          "Loans"
+        ]
+      },
+      "get": {
+        "operationId": "LoansController_findAll",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Nomor halaman",
+            "schema": {
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Jumlah item per halaman",
+            "schema": {
+              "default": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Kata kunci pencarian",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "description": "Kolom untuk pengurutan data",
+            "schema": {
+              "default": "createdAt",
+              "type": "string"
+            }
+          },
+          {
+            "name": "order",
+            "required": false,
+            "in": "query",
+            "description": "Arah pengurutan data (ASC atau DESC)",
+            "schema": {
+              "default": "DESC",
+              "type": "string",
+              "enum": [
+                "ASC",
+                "DESC"
+              ]
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "Filter berdasarkan status peminjaman",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "BORROWED",
+                "RETURNED"
+              ]
+            }
+          },
+          {
+            "name": "memberId",
+            "required": false,
+            "in": "query",
+            "description": "Filter berdasarkan ID anggota",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "bookId",
+            "required": false,
+            "in": "query",
+            "description": "Filter berdasarkan ID buku",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Daftar transaksi peminjaman berhasil diambil"
+          }
+        },
+        "summary": "Mendapatkan daftar transaksi peminjaman (filter status, member, book)",
+        "tags": [
+          "Loans"
+        ]
+      }
+    },
+    "/api/v1/loans/{id}": {
+      "get": {
+        "operationId": "LoansController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID Transaksi Peminjaman (UUID)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detail transaksi peminjaman berhasil diambil"
+          },
+          "404": {
+            "description": "Transaksi peminjaman tidak ditemukan"
+          }
+        },
+        "summary": "Mendapatkan detail transaksi peminjaman",
+        "tags": [
+          "Loans"
+        ]
+      }
+    },
+    "/api/v1/loans/{id}/return": {
+      "patch": {
+        "operationId": "LoansController_returnBook",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID Transaksi Peminjaman (UUID)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReturnLoanDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Pengembalian buku berhasil diproses, stok buku bertambah"
+          },
+          "400": {
+            "description": "Buku sudah pernah dikembalikan sebelumnya"
+          },
+          "404": {
+            "description": "Transaksi peminjaman tidak ditemukan"
+          }
+        },
+        "summary": "Memproses pengembalian buku (Atomic Transaction: status jadi RETURNED & stok buku bertambah)",
+        "tags": [
+          "Loans"
+        ]
+      }
+    },
+    "/api/v1/dashboard/summary": {
+      "get": {
+        "operationId": "DashboardController_getSummary",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Statistik dashboard berhasil diambil"
+          }
+        },
+        "summary": "Mendapatkan statistik ringkasan operasional perpustakaan (katalog, eksemplar, anggota, sirkulasi)",
+        "tags": [
+          "Dashboard"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "Sistem Informasi Perpustakaan REST API",
+    "description": "Spesifikasi RESTful API Sistem Informasi Perpustakaan Sederhana untuk demonstrasi tugas perkuliahan. Menggunakan endpoint /api/v1.",
+    "version": "1.0.0",
+    "contact": {}
+  },
+  "tags": [
+    {
+      "name": "Dashboard",
+      "description": "Ringkasan metrik perpustakaan"
+    },
+    {
+      "name": "Books",
+      "description": "Manajemen katalog buku dan stok eksemplar"
+    },
+    {
+      "name": "Members",
+      "description": "Manajemen data anggota perpustakaan (NIM unik)"
+    },
+    {
+      "name": "Loans",
+      "description": "Transaksi peminjaman dan pengembalian buku"
+    }
+  ],
+  "servers": [],
+  "components": {
+    "schemas": {
+      "CreateBookDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Judul buku",
+            "example": "Clean Code: A Handbook of Agile Software Craftsmanship"
+          },
+          "author": {
+            "type": "string",
+            "description": "Nama penulis / pengarang",
+            "example": "Robert C. Martin"
+          },
+          "isbn": {
+            "type": "string",
+            "description": "Nomor ISBN buku (opsional)",
+            "example": "978-0132350884"
+          },
+          "totalCopies": {
+            "type": "number",
+            "description": "Jumlah total eksemplar fisik buku",
+            "example": 5,
+            "default": 1
+          }
+        },
+        "required": [
+          "title",
+          "author",
+          "totalCopies"
+        ]
+      },
+      "UpdateBookDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Judul buku",
+            "example": "Clean Code: A Handbook of Agile Software Craftsmanship"
+          },
+          "author": {
+            "type": "string",
+            "description": "Nama penulis / pengarang",
+            "example": "Robert C. Martin"
+          },
+          "isbn": {
+            "type": "string",
+            "description": "Nomor ISBN buku (opsional)",
+            "example": "978-0132350884"
+          },
+          "totalCopies": {
+            "type": "number",
+            "description": "Jumlah total eksemplar fisik buku",
+            "example": 5,
+            "default": 1
+          }
+        }
+      },
+      "CreateMemberDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Nama lengkap anggota perpustakaan",
+            "example": "Muhammad Faiz"
+          },
+          "nim": {
+            "type": "string",
+            "description": "Nomor Induk Mahasiswa (NIM) unik",
+            "example": "2210511001"
+          },
+          "email": {
+            "type": "string",
+            "description": "Alamat email aktif anggota",
+            "example": "faiz@mahasiswa.ac.id"
+          }
+        },
+        "required": [
+          "name",
+          "nim"
+        ]
+      },
+      "UpdateMemberDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Nama lengkap anggota perpustakaan",
+            "example": "Muhammad Faiz"
+          },
+          "nim": {
+            "type": "string",
+            "description": "Nomor Induk Mahasiswa (NIM) unik",
+            "example": "2210511001"
+          },
+          "email": {
+            "type": "string",
+            "description": "Alamat email aktif anggota",
+            "example": "faiz@mahasiswa.ac.id"
+          }
+        }
+      },
+      "CreateLoanDto": {
+        "type": "object",
+        "properties": {
+          "bookId": {
+            "type": "string",
+            "description": "ID Buku (UUID)",
+            "example": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
+          },
+          "memberId": {
+            "type": "string",
+            "description": "ID Anggota (UUID)",
+            "example": "b1eebc99-9c0b-4ef8-bb6d-6bb9bd380a22"
+          },
+          "loanDate": {
+            "type": "string",
+            "description": "Tanggal pinjam (format: YYYY-MM-DD, default: hari ini)",
+            "example": "2026-11-07"
+          },
+          "dueDate": {
+            "type": "string",
+            "description": "Batas tanggal pengembalian (format: YYYY-MM-DD, default: +7 hari)",
+            "example": "2026-11-14"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Catatan tambahan transaksi peminjaman",
+            "example": "Untuk keperluan tugas akhir"
+          }
+        },
+        "required": [
+          "bookId",
+          "memberId"
+        ]
+      },
+      "ReturnLoanDto": {
+        "type": "object",
+        "properties": {
+          "returnDate": {
+            "type": "string",
+            "description": "Tanggal pengembalian buku (format: YYYY-MM-DD, default: hari ini)",
+            "example": "2026-11-10"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Catatan kondisi buku saat dikembalikan",
+            "example": "Kondisi buku baik dan lengkap"
+          }
+        }
+      }
+    }
+  }
+}

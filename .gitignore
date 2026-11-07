@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+
+# Build
+dist/
+coverage/
+
+# Environment / Credentials
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+
+# Backup
+*.zip
+*.bak
+*.tmp
+
+# IDE
+.vscode/
+.idea/
+
+# TypeScript incremental build cache
+*.tsbuildinfo
+
+# Operating system temporary files
+Thumbs.db
+.DS_Store

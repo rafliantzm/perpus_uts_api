@@ -1,0 +1,1162 @@
+openapi: 3.0.0
+info:
+  title: Sistem Informasi Perpustakaan REST API
+  description: Spesifikasi RESTful API Sistem Informasi Perpustakaan Sederhana untuk demonstrasi tugas perkuliahan. Menggunakan endpoint /api/v1.
+  version: 1.0.0
+  contact: {}
+tags:
+  - name: Dashboard
+    description: Ringkasan metrik perpustakaan
+  - name: Books
+    description: Manajemen katalog buku dan stok eksemplar
+  - name: Members
+    description: Manajemen data anggota perpustakaan (NIM unik)
+  - name: Loans
+    description: Transaksi peminjaman dan pengembalian buku
+servers:
+  - url: http://localhost:3000
+    description: Development Server
+paths:
+  /api/v1/books:
+    post:
+      operationId: BooksController_create
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBookDto'
+      responses:
+        '201':
+          description: Buku berhasil ditambahkan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookResponseEnvelope'
+        '400':
+          description: Payload tidak valid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseEnvelope'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetailsResponse'
+      summary: Menambahkan buku baru ke katalog perpustakaan
+      tags:
+        - Books
+    get:
+      operationId: BooksController_findAll
+      parameters:
+        - name: page
+          required: false
+          in: query
+          description: Nomor halaman
+          schema:
+            default: 1
+            type: number
+        - name: limit
+          required: false
+          in: query
+          description: Jumlah item per halaman
+          schema:
+            default: 10
+            type: number
+        - name: search
+          required: false
+          in: query
+          description: Kata kunci pencarian
+          schema:
+            type: string
+        - name: sortBy
+          in: query
+          required: false
+          schema:
+            type: string
+            default: createdAt
+          description: Kolom untuk pengurutan data terverifikasi allowlist
+        - name: order
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - ASC
+              - DESC
+            default: DESC
+          description: Arah pengurutan data (ASC atau DESC) dengan secondary tie-breaker id ASC
+      responses:
+        '200':
+          description: Daftar buku berhasil diambil (dengan pagination & search)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BooksListResponseEnvelope'
+      summary: Mendapatkan daftar buku (dengan pagination & search)
+      tags:
+        - Books
+  /api/v1/books/{id}:
+    get:
+      operationId: BooksController_findOne
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: ID Buku (UUID)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Detail buku berhasil diambil
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookResponseEnvelope'
+          headers:
+            ETag:
+              schema:
+                type: string
+                example: '"e3b0c44298fc1c149afbf4c8996fb92427ae41e4"'
+              description: Strong entity tag RFC 9110 penjamin integritas & concurrency
+        '404':
+          description: Buku tidak ditemukan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseEnvelope'
+      summary: Mendapatkan detail buku berdasarkan ID (UUID)
+      tags:
+        - Books
+    put:
+      operationId: BooksController_updateFull
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: ID Buku (UUID)
+          schema:
+            type: string
+        - name: If-Match
+          in: header
+          required: false
+          schema:
+            type: string
+          description: Strong ETag validator untuk optimistic concurrency control (RFC 9110)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateBookDto'
+      responses:
+        '200':
+          description: Data buku berhasil diperbarui secara penuh
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookResponseEnvelope'
+        '400':
+          description: Payload tidak valid atau konflik kuota stok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseEnvelope'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetailsResponse'
+        '404':
+          description: Buku tidak ditemukan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseEnvelope'
+        '412':
+          description: Precondition Failed - ETag usang atau tidak cocok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseEnvelope'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetailsResponse'
+      summary: Memperbarui seluruh data buku
+      tags:
+        - Books
+    patch:
+      operationId: BooksController_updatePartial
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: ID Buku (UUID)
+          schema:
+            type: string
+        - name: If-Match
+          in: header
+          required: false
+          schema:
+            type: string
+          description: Strong ETag validator untuk optimistic concurrency control (RFC 9110)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateBookDto'
+      responses:
+        '200':
+          description: Data buku berhasil diperbarui sebagian
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookResponseEnvelope'
+        '404':
+          description: Buku tidak ditemukan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseEnvelope'
+        '412':
+          description: Precondition Failed - ETag usang atau tidak cocok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseEnvelope'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetailsResponse'
+      summary: Memperbarui sebagian data buku
+      tags:
+        - Books
+    delete:
+      operationId: BooksController_remove
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: ID Buku (UUID)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Buku berhasil dihapus
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookResponseEnvelope'
+        '400':
+          description: Buku tidak bisa dihapus karena masih ada peminjaman aktif
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseEnvelope'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetailsResponse'
+        '404':
+          description: Buku tidak ditemukan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseEnvelope'
+      summary: Menghapus buku dari katalog
+      tags:
+        - Books
+  /api/v1/members:
+    post:
+      operationId: MembersController_create
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateMemberDto'
+      responses:
+        '201':
+          description: Anggota berhasil didaftarkan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MemberResponseEnvelope'
+        '400':
+          description: Payload tidak valid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseEnvelope'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetailsResponse'
+        '409':
+          description: NIM sudah terdaftar
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseEnvelope'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetailsResponse'
+      summary: Mendaftarkan anggota baru
+      tags:
+        - Members
+    get:
+      operationId: MembersController_findAll
+      parameters:
+        - name: page
+          required: false
+          in: query
+          description: Nomor halaman
+          schema:
+            default: 1
+            type: number
+        - name: limit
+          required: false
+          in: query
+          description: Jumlah item per halaman
+          schema:
+            default: 10
+            type: number
+        - name: search
+          required: false
+          in: query
+          description: Kata kunci pencarian
+          schema:
+            type: string
+        - name: sortBy
+          in: query
+          required: false
+          schema:
+            type: string
+            default: createdAt
+          description: Kolom untuk pengurutan data terverifikasi allowlist
+        - name: order
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - ASC
+              - DESC
+            default: DESC
+          description: Arah pengurutan data (ASC atau DESC) dengan secondary tie-breaker id ASC
+      responses:
+        '200':
+          description: Daftar anggota berhasil diambil (dengan pagination & search)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MembersListResponseEnvelope'
+      summary: Mendapatkan daftar anggota (dengan pagination & search)
+      tags:
+        - Members
+  /api/v1/members/{id}:
+    get:
+      operationId: MembersController_findOne
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: ID Anggota (UUID)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Detail anggota berhasil diambil beserta riwayat peminjaman
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MemberResponseEnvelope'
+          headers:
+            ETag:
+              schema:
+                type: string
+                example: '"e3b0c44298fc1c149afbf4c8996fb92427ae41e4"'
+              description: Strong entity tag RFC 9110 penjamin integritas & concurrency
+        '404':
+          description: Anggota tidak ditemukan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseEnvelope'
+      summary: Mendapatkan detail anggota beserta riwayat peminjaman
+      tags:
+        - Members
+    put:
+      operationId: MembersController_updateFull
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: ID Anggota (UUID)
+          schema:
+            type: string
+        - name: If-Match
+          in: header
+          required: false
+          schema:
+            type: string
+          description: Strong ETag validator untuk optimistic concurrency control (RFC 9110)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateMemberDto'
+      responses:
+        '200':
+          description: Data anggota berhasil diperbarui secara penuh
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MemberResponseEnvelope'
+        '404':
+          description: Anggota tidak ditemukan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseEnvelope'
+        '409':
+          description: NIM sudah digunakan anggota lain
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseEnvelope'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetailsResponse'
+        '412':
+          description: Precondition Failed - ETag usang atau tidak cocok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseEnvelope'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetailsResponse'
+      summary: Memperbarui seluruh data anggota
+      tags:
+        - Members
+    patch:
+      operationId: MembersController_updatePartial
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: ID Anggota (UUID)
+          schema:
+            type: string
+        - name: If-Match
+          in: header
+          required: false
+          schema:
+            type: string
+          description: Strong ETag validator untuk optimistic concurrency control (RFC 9110)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateMemberDto'
+      responses:
+        '200':
+          description: Data anggota berhasil diperbarui sebagian
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MemberResponseEnvelope'
+        '404':
+          description: Anggota tidak ditemukan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseEnvelope'
+        '409':
+          description: NIM sudah digunakan anggota lain
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseEnvelope'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetailsResponse'
+        '412':
+          description: Precondition Failed - ETag usang atau tidak cocok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseEnvelope'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetailsResponse'
+      summary: Memperbarui sebagian data anggota
+      tags:
+        - Members
+    delete:
+      operationId: MembersController_remove
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: ID Anggota (UUID)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Anggota berhasil dihapus
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MemberResponseEnvelope'
+        '400':
+          description: Anggota tidak dapat dihapus karena masih meminjam buku
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseEnvelope'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetailsResponse'
+        '404':
+          description: Anggota tidak ditemukan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseEnvelope'
+      summary: Menghapus anggota
+      tags:
+        - Members
+  /api/v1/loans:
+    post:
+      operationId: LoansController_create
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateLoanDto'
+      responses:
+        '201':
+          description: Peminjaman berhasil dicatat, stok buku otomatis berkurang secara atomik
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoanResponseEnvelope'
+        '400':
+          description: Stok buku habis atau batas tanggal pengembalian tidak valid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseEnvelope'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetailsResponse'
+        '404':
+          description: Buku atau anggota tidak ditemukan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseEnvelope'
+      summary: 'Mencatat peminjaman buku baru (Atomic Transaction: validasi stok & kurangi eksemplar)'
+      tags:
+        - Loans
+    get:
+      operationId: LoansController_findAll
+      parameters:
+        - name: page
+          required: false
+          in: query
+          description: Nomor halaman
+          schema:
+            default: 1
+            type: number
+        - name: limit
+          required: false
+          in: query
+          description: Jumlah item per halaman
+          schema:
+            default: 10
+            type: number
+        - name: search
+          required: false
+          in: query
+          description: Kata kunci pencarian
+          schema:
+            type: string
+        - name: status
+          required: false
+          in: query
+          description: Filter berdasarkan status peminjaman
+          schema:
+            type: string
+            enum:
+              - BORROWED
+              - RETURNED
+        - name: memberId
+          required: false
+          in: query
+          description: Filter berdasarkan ID anggota
+          schema:
+            type: string
+        - name: bookId
+          required: false
+          in: query
+          description: Filter berdasarkan ID buku
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Daftar transaksi peminjaman berhasil diambil
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoansListResponseEnvelope'
+      summary: Mendapatkan daftar transaksi peminjaman (filter status, member, book)
+      tags:
+        - Loans
+  /api/v1/loans/{id}:
+    get:
+      operationId: LoansController_findOne
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: ID Transaksi Peminjaman (UUID)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Detail transaksi peminjaman berhasil diambil
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoanResponseEnvelope'
+        '404':
+          description: Transaksi peminjaman tidak ditemukan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseEnvelope'
+      summary: Mendapatkan detail transaksi peminjaman
+      tags:
+        - Loans
+  /api/v1/loans/{id}/return:
+    patch:
+      operationId: LoansController_returnBook
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: ID Transaksi Peminjaman (UUID)
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReturnLoanDto'
+      responses:
+        '200':
+          description: Pengembalian buku berhasil diproses, stok buku bertambah secara atomik
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoanResponseEnvelope'
+        '400':
+          description: Buku sudah pernah dikembalikan sebelumnya
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseEnvelope'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetailsResponse'
+        '404':
+          description: Transaksi peminjaman tidak ditemukan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseEnvelope'
+      summary: 'Memproses pengembalian buku (Atomic Transaction: status jadi RETURNED & stok buku bertambah)'
+      tags:
+        - Loans
+  /api/v1/dashboard/summary:
+    get:
+      operationId: DashboardController_getSummary
+      parameters: []
+      responses:
+        '200':
+          description: Statistik dashboard operasional perpustakaan berhasil diambil
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardSummaryResponseEnvelope'
+      summary: Mendapatkan statistik ringkasan operasional perpustakaan (katalog, eksemplar, anggota, sirkulasi)
+      tags:
+        - Dashboard
+components:
+  schemas:
+    CreateBookDto:
+      type: object
+      properties:
+        title:
+          type: string
+          description: Judul buku
+          example: 'Clean Code: A Handbook of Agile Software Craftsmanship'
+        author:
+          type: string
+          description: Nama penulis / pengarang
+          example: Robert C. Martin
+        isbn:
+          type: string
+          description: Nomor ISBN buku (opsional)
+          example: 978-0132350884
+        totalCopies:
+          type: number
+          description: Jumlah total eksemplar fisik buku
+          example: 5
+          default: 1
+      required:
+        - title
+        - author
+        - totalCopies
+    UpdateBookDto:
+      type: object
+      properties:
+        title:
+          type: string
+          description: Judul buku
+          example: 'Clean Code: A Handbook of Agile Software Craftsmanship'
+        author:
+          type: string
+          description: Nama penulis / pengarang
+          example: Robert C. Martin
+        isbn:
+          type: string
+          description: Nomor ISBN buku (opsional)
+          example: 978-0132350884
+        totalCopies:
+          type: number
+          description: Jumlah total eksemplar fisik buku
+          example: 5
+          default: 1
+    CreateMemberDto:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Nama lengkap anggota perpustakaan
+          example: Muhammad Faiz
+        nim:
+          type: string
+          description: Nomor Induk Mahasiswa (NIM) unik
+          example: '2210511001'
+        email:
+          type: string
+          description: Alamat email aktif anggota
+          example: faiz@mahasiswa.ac.id
+      required:
+        - name
+        - nim
+    UpdateMemberDto:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Nama lengkap anggota perpustakaan
+          example: Muhammad Faiz
+        nim:
+          type: string
+          description: Nomor Induk Mahasiswa (NIM) unik
+          example: '2210511001'
+        email:
+          type: string
+          description: Alamat email aktif anggota
+          example: faiz@mahasiswa.ac.id
+    CreateLoanDto:
+      type: object
+      properties:
+        bookId:
+          type: string
+          description: ID Buku (UUID)
+          example: a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11
+        memberId:
+          type: string
+          description: ID Anggota (UUID)
+          example: b1eebc99-9c0b-4ef8-bb6d-6bb9bd380a22
+        loanDate:
+          type: string
+          description: 'Tanggal pinjam (format: YYYY-MM-DD, default: hari ini)'
+          example: '2026-11-07'
+        dueDate:
+          type: string
+          description: 'Batas tanggal pengembalian (format: YYYY-MM-DD, default: +7 hari)'
+          example: '2026-11-14'
+        notes:
+          type: string
+          description: Catatan tambahan transaksi peminjaman
+          example: Untuk keperluan tugas akhir
+      required:
+        - bookId
+        - memberId
+    ReturnLoanDto:
+      type: object
+      properties:
+        returnDate:
+          type: string
+          description: 'Tanggal pengembalian buku (format: YYYY-MM-DD, default: hari ini)'
+          example: '2026-11-10'
+        notes:
+          type: string
+          description: Catatan kondisi buku saat dikembalikan
+          example: Kondisi buku baik dan lengkap
+    BookEntity:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11
+        title:
+          type: string
+          example: 'Clean Code: A Handbook of Agile Software Craftsmanship'
+        author:
+          type: string
+          example: Robert C. Martin
+        isbn:
+          type: string
+          nullable: true
+          example: 978-0132350884
+        totalCopies:
+          type: integer
+          minimum: 1
+          example: 5
+        availableCopies:
+          type: integer
+          minimum: 0
+          example: 4
+        createdAt:
+          type: string
+          format: date-time
+          example: '2026-11-07T10:00:00.000Z'
+        updatedAt:
+          type: string
+          format: date-time
+          example: '2026-11-07T10:00:00.000Z'
+      required:
+        - id
+        - title
+        - author
+        - totalCopies
+        - availableCopies
+        - createdAt
+        - updatedAt
+    MemberEntity:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: b1eebc99-9c0b-4ef8-bb6d-6bb9bd380a22
+        name:
+          type: string
+          example: Muhammad Faiz
+        nim:
+          type: string
+          example: '2210511001'
+        email:
+          type: string
+          nullable: true
+          format: email
+          example: faiz@mahasiswa.ac.id
+        createdAt:
+          type: string
+          format: date-time
+          example: '2026-11-07T10:00:00.000Z'
+        updatedAt:
+          type: string
+          format: date-time
+          example: '2026-11-07T10:00:00.000Z'
+      required:
+        - id
+        - name
+        - nim
+        - createdAt
+        - updatedAt
+    LoanEntity:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: c2eebc99-9c0b-4ef8-bb6d-6bb9bd380a33
+        bookId:
+          type: string
+          format: uuid
+          example: a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11
+        memberId:
+          type: string
+          format: uuid
+          example: b1eebc99-9c0b-4ef8-bb6d-6bb9bd380a22
+        loanDate:
+          type: string
+          format: date
+          example: '2026-11-07'
+        dueDate:
+          type: string
+          format: date
+          example: '2026-11-14'
+        returnDate:
+          type: string
+          format: date
+          nullable: true
+          example: null
+        status:
+          type: string
+          enum:
+            - BORROWED
+            - RETURNED
+          example: BORROWED
+        notes:
+          type: string
+          nullable: true
+          example: Tugas akhir
+        createdAt:
+          type: string
+          format: date-time
+          example: '2026-11-07T10:00:00.000Z'
+        updatedAt:
+          type: string
+          format: date-time
+          example: '2026-11-07T10:00:00.000Z'
+        book:
+          $ref: '#/components/schemas/BookEntity'
+        member:
+          $ref: '#/components/schemas/MemberEntity'
+      required:
+        - id
+        - bookId
+        - memberId
+        - loanDate
+        - dueDate
+        - status
+        - createdAt
+        - updatedAt
+    DashboardSummaryData:
+      type: object
+      properties:
+        totalTitles:
+          type: integer
+          example: 7
+        totalCopies:
+          type: integer
+          example: 22
+        availableCopies:
+          type: integer
+          example: 19
+        borrowedCopies:
+          type: integer
+          example: 3
+        totalMembers:
+          type: integer
+          example: 5
+        activeLoans:
+          type: integer
+          example: 3
+        returnedLoans:
+          type: integer
+          example: 2
+        recentLoans:
+          type: array
+          items:
+            $ref: '#/components/schemas/LoanEntity'
+      required:
+        - totalTitles
+        - totalCopies
+        - availableCopies
+        - borrowedCopies
+        - totalMembers
+        - activeLoans
+        - returnedLoans
+    PaginationMeta:
+      type: object
+      properties:
+        total:
+          type: integer
+          example: 10
+        page:
+          type: integer
+          example: 1
+        limit:
+          type: integer
+          example: 10
+        totalPages:
+          type: integer
+          example: 1
+      required:
+        - total
+        - page
+        - limit
+        - totalPages
+    BaseSuccessResponse:
+      type: object
+      properties:
+        statusCode:
+          type: integer
+          example: 200
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Operasi berhasil
+      required:
+        - statusCode
+        - success
+        - message
+    ErrorResponseEnvelope:
+      type: object
+      properties:
+        statusCode:
+          type: integer
+          example: 400
+        success:
+          type: boolean
+          example: false
+        message:
+          oneOf:
+            - type: string
+              example: Stok buku habis
+            - type: array
+              items:
+                type: string
+              example:
+                - totalCopies must not be less than 1
+        error:
+          type: string
+          example: Bad Request
+        timestamp:
+          type: string
+          format: date-time
+          example: '2026-11-07T15:30:00.000Z'
+        path:
+          type: string
+          example: /api/v1/loans
+      required:
+        - statusCode
+        - success
+        - message
+        - error
+        - timestamp
+        - path
+    BookResponseEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/BaseSuccessResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/BookEntity'
+          required:
+            - data
+    BooksListResponseEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/BaseSuccessResponse'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/BookEntity'
+            meta:
+              $ref: '#/components/schemas/PaginationMeta'
+          required:
+            - data
+            - meta
+    MemberResponseEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/BaseSuccessResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/MemberEntity'
+          required:
+            - data
+    MembersListResponseEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/BaseSuccessResponse'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/MemberEntity'
+            meta:
+              $ref: '#/components/schemas/PaginationMeta'
+          required:
+            - data
+            - meta
+    LoanResponseEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/BaseSuccessResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/LoanEntity'
+          required:
+            - data
+    LoansListResponseEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/BaseSuccessResponse'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/LoanEntity'
+            meta:
+              $ref: '#/components/schemas/PaginationMeta'
+          required:
+            - data
+            - meta
+    DashboardSummaryResponseEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/BaseSuccessResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/DashboardSummaryData'
+          required:
+            - data
+    ProblemDetailsResponse:
+      type: object
+      properties:
+        type:
+          type: string
+          format: uri
+          example: https://api.perpus.ac.id/errors/bad-request
+          description: URI identifikasi tipe problem sesuai RFC 9457
+        title:
+          type: string
+          example: Bad Request
+          description: Ringkasan singkat problem
+        status:
+          type: integer
+          example: 400
+          description: Status code HTTP
+        detail:
+          type: string
+          example: Data input tidak valid atau stok eksemplar habis
+          description: Penjelasan spesifik kesalahan yang terjadi
+        instance:
+          type: string
+          example: /api/v1/books
+          description: URI resource endpoint tempat terjadinya kesalahan
+      required:
+        - type
+        - title
+        - status
+        - detail
+        - instance

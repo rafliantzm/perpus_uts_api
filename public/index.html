@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistem Informasi Perpustakaan</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- App Layout -->
+  <div class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="brand-badge">SIP</div>
+        <div class="brand-info">
+          <h2>Perpustakaan</h2>
+          <span>Staff Demo System</span>
+        </div>
+      </div>
+
+      <nav class="nav-menu">
+        <button class="nav-item active" data-tab="dashboard">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+          <span>Dashboard</span>
+        </button>
+        <button class="nav-item" data-tab="books">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+          <span>Katalog Buku</span>
+        </button>
+        <button class="nav-item" data-tab="members">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+          <span>Data Anggota</span>
+        </button>
+        <button class="nav-item" data-tab="loans">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
+          <span>Sirkulasi Pinjam</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <a href="/api/docs" target="_blank" class="docs-link">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
+          <span>Swagger Docs (v1)</span>
+        </a>
+        <div class="server-status" id="server-status">
+          <span class="status-indicator"></span>
+          <span class="status-text">Memeriksa API...</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <header class="topbar">
+        <div class="page-title">
+          <h1 id="current-page-title">Dashboard Operasional</h1>
+          <p id="current-page-desc">Ringkasan koleksi buku dan transaksi sirkulasi perpustakaan</p>
+        </div>
+        <div class="topbar-actions">
+          <button id="refresh-btn" class="btn btn-secondary" title="Muat Ulang Data">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path></svg>
+            <span>Segarkan</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- TAB: DASHBOARD -->
+      <section id="tab-dashboard" class="tab-pane active">
+        <!-- KPI Metric Cards -->
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-icon blue">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+            </div>
+            <div class="kpi-data">
+              <span class="kpi-label">Judul Buku</span>
+              <h3 id="stat-total-titles">0</h3>
+              <span class="kpi-sub" id="stat-total-copies">0 total eksemplar</span>
+            </div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-icon green">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            </div>
+            <div class="kpi-data">
+              <span class="kpi-label">Buku Tersedia</span>
+              <h3 id="stat-available-copies">0</h3>
+              <span class="kpi-sub">Siap dipinjam</span>
+            </div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-icon amber">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            </div>
+            <div class="kpi-data">
+              <span class="kpi-label">Peminjaman Aktif</span>
+              <h3 id="stat-active-loans">0</h3>
+              <span class="kpi-sub" id="stat-borrowed-copies">0 buku beredar</span>
+            </div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-icon purple">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
+            </div>
+            <div class="kpi-data">
+              <span class="kpi-label">Anggota Terdaftar</span>
+              <h3 id="stat-total-members">0</h3>
+              <span class="kpi-sub">Mahasiswa aktif</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Circulation Section -->
+        <div class="card recent-section">
+          <div class="card-header">
+            <div>
+              <h3>Aktivitas Peminjaman Terbaru</h3>
+              <p id="recent-loans-subtitle">Transaksi sirkulasi terkini (maks. 5)</p>
+            </div>
+            <button class="btn btn-sm btn-outline" onclick="app.switchTab('loans')">Lihat Semua</button>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Peminjam (NIM)</th>
+                  <th>Judul Buku</th>
+                  <th>Tgl Pinjam</th>
+                  <th>Batas Kembali</th>
+                  <th>Status</th>
+                  <th>Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="recent-loans-table-body">
+                <tr><td colspan="6" class="text-center py-4">Memuat data...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB: BOOKS -->
+      <section id="tab-books" class="tab-pane">
+        <div class="toolbar">
+          <div class="search-box">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <input type="text" id="book-search-input" placeholder="Cari judul, penulis, atau ISBN...">
+          </div>
+          <button class="btn btn-primary" onclick="app.openBookModal()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            <span>Tambah Buku</span>
+          </button>
+        </div>
+
+        <div class="card">
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Judul Buku</th>
+                  <th>Penulis</th>
+                  <th>ISBN</th>
+                  <th>Total Eksemplar</th>
+                  <th>Tersedia</th>
+                  <th class="text-right">Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="books-table-body">
+                <tr><td colspan="6" class="text-center py-4">Memuat data buku...</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="pagination-bar" id="books-pagination"></div>
+        </div>
+      </section>
+
+      <!-- TAB: MEMBERS -->
+      <section id="tab-members" class="tab-pane">
+        <div class="toolbar">
+          <div class="search-box">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <input type="text" id="member-search-input" placeholder="Cari nama, NIM, atau email...">
+          </div>
+          <button class="btn btn-primary" onclick="app.openMemberModal()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            <span>Daftar Anggota</span>
+          </button>
+        </div>
+
+        <div class="card">
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Nama Lengkap</th>
+                  <th>NIM</th>
+                  <th>Email</th>
+                  <th>Tgl Bergabung</th>
+                  <th class="text-right">Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="members-table-body">
+                <tr><td colspan="5" class="text-center py-4">Memuat data anggota...</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="pagination-bar" id="members-pagination"></div>
+        </div>
+      </section>
+
+      <!-- TAB: LOANS -->
+      <section id="tab-loans" class="tab-pane">
+        <div class="toolbar">
+          <div class="filter-group">
+            <label for="loan-filter-status">Filter Status:</label>
+            <select id="loan-filter-status" class="select-input">
+              <option value="">Semua Status</option>
+              <option value="BORROWED">Sedang Dipinjam</option>
+              <option value="RETURNED">Sudah Dikembalikan</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" onclick="app.openLoanModal()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            <span>Catat Peminjaman</span>
+          </button>
+        </div>
+
+        <div class="card">
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Peminjam (NIM)</th>
+                  <th>Judul Buku</th>
+                  <th>Tgl Pinjam</th>
+                  <th>Batas Kembali</th>
+                  <th>Tgl Pengembalian</th>
+                  <th>Status</th>
+                  <th>Catatan</th>
+                  <th class="text-right">Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="loans-table-body">
+                <tr><td colspan="8" class="text-center py-4">Memuat data sirkulasi...</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="pagination-bar" id="loans-pagination"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- MODAL: BOOK FORM -->
+  <div id="book-modal" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="book-modal-title">Tambah Buku Baru</h3>
+        <button class="btn-close" onclick="app.closeModal('book-modal')">&times;</button>
+      </div>
+      <form id="book-form" onsubmit="app.handleSaveBook(event)">
+        <input type="hidden" id="book-id">
+        <div class="form-group">
+          <label for="book-title">Judul Buku <span class="required">*</span></label>
+          <input type="text" id="book-title" class="form-input" required placeholder="Contoh: Clean Code">
+        </div>
+        <div class="form-group">
+          <label for="book-author">Penulis / Pengarang <span class="required">*</span></label>
+          <input type="text" id="book-author" class="form-input" required placeholder="Contoh: Robert C. Martin">
+        </div>
+        <div class="form-row">
+          <div class="form-group col">
+            <label for="book-isbn">ISBN (Opsional)</label>
+            <input type="text" id="book-isbn" class="form-input" placeholder="Contoh: 978-0132350884">
+          </div>
+          <div class="form-group col">
+            <label for="book-total">Total Eksemplar <span class="required">*</span></label>
+            <input type="number" id="book-total" class="form-input" min="1" value="1" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="app.closeModal('book-modal')">Batal</button>
+          <button type="submit" class="btn btn-primary" id="book-submit-btn">Simpan Buku</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: MEMBER FORM -->
+  <div id="member-modal" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="member-modal-title">Daftar Anggota Baru</h3>
+        <button class="btn-close" onclick="app.closeModal('member-modal')">&times;</button>
+      </div>
+      <form id="member-form" onsubmit="app.handleSaveMember(event)">
+        <input type="hidden" id="member-id">
+        <div class="form-group">
+          <label for="member-name">Nama Lengkap <span class="required">*</span></label>
+          <input type="text" id="member-name" class="form-input" required placeholder="Nama lengkap mahasiswa">
+        </div>
+        <div class="form-group">
+          <label for="member-nim">Nomor Induk Mahasiswa (NIM) <span class="required">*</span></label>
+          <input type="text" id="member-nim" class="form-input" required placeholder="Contoh: 2210511001">
+        </div>
+        <div class="form-group">
+          <label for="member-email">Alamat Email (Opsional)</label>
+          <input type="email" id="member-email" class="form-input" placeholder="mahasiswa@kampus.ac.id">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="app.closeModal('member-modal')">Batal</button>
+          <button type="submit" class="btn btn-primary" id="member-submit-btn">Simpan Anggota</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: LOAN FORM -->
+  <div id="loan-modal" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Catat Peminjaman Buku</h3>
+        <button class="btn-close" onclick="app.closeModal('loan-modal')">&times;</button>
+      </div>
+      <form id="loan-form" onsubmit="app.handleSaveLoan(event)">
+        <div class="form-group">
+          <label for="loan-member-id">Pilih Anggota <span class="required">*</span></label>
+          <select id="loan-member-id" class="form-input" required>
+            <option value="">-- Pilih Mahasiswa / Anggota --</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="loan-book-id">Pilih Buku <span class="required">*</span></label>
+          <select id="loan-book-id" class="form-input" required onchange="app.handleBookSelectChange()">
+            <option value="">-- Pilih Buku dari Katalog --</option>
+          </select>
+          <small id="loan-stock-info" class="hint-text"></small>
+        </div>
+        <div class="form-row">
+          <div class="form-group col">
+            <label for="loan-date">Tanggal Pinjam <span class="required">*</span></label>
+            <input type="date" id="loan-date" class="form-input" required>
+          </div>
+          <div class="form-group col">
+            <label for="loan-due-date">Batas Pengembalian <span class="required">*</span></label>
+            <input type="date" id="loan-due-date" class="form-input" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="loan-notes">Catatan Transaksi (Opsional)</label>
+          <textarea id="loan-notes" class="form-input" rows="2" placeholder="Catatan atau tujuan peminjaman"></textarea>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="app.closeModal('loan-modal')">Batal</button>
+          <button type="submit" class="btn btn-primary" id="loan-submit-btn">Konfirmasi Peminjaman</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <script src="/js/app.js"></script>
+</body>
+</html>
